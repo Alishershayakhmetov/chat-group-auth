@@ -1,27 +1,67 @@
-import express, { Request, Response } from "express";
-import http from "http";
-import { Server } from "socket.io";
-import cors from "cors";
+import 'dotenv/config';
+import express, { Request, Response } from 'express';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-const PORT = 3001
+const app = express();
+const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT) : undefined;
 
-const app = express()
-app.use(cors());
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET","POST", ]
-    }
-})
+const pool = new Pool({
+  user: process.env.USER,
+  host: process.env.HOST,
+  database: process.env.DB_NAME,
+  password: process.env.PASSWORD,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
+  // ssl:Boolean(process.env.DB_SSL)
+});
 
-io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.id}`);
-    socket.on("send_message", (data) => {
-        socket.broadcast.emit("receive_message", data);
-    })
-})
+app.use(express.json());
 
-server.listen(PORT, () => {
-    console.log(`Server is running on ${PORT} PORT`)
-})
+app.get('/test-db', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Database error');
+  }
+});
+
+app.post('/add-user', async (req: Request, res: Response): Promise<void> => {
+  const { name, email } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
+      [name, email]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error inserting user');
+  }
+});
+
+app.get('/users', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error fetching users');
+  }
+});
+
+app.delete('/users/:id', async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error deleting user');
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});

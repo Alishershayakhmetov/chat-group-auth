@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema with UUID prefixes for ids
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// USERS table
+model users {
+  id             String    @id @default(uuid())
+  name           String
+  lastName       String
+  email          String    @unique
+  password       String
+  profilePicture String? // Nullable
+  status         String // inline, offline
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Nullable for soft deletion
+  lastActive     DateTime?
+  isAdmin        Boolean   @default(false)
+
+  // Relationships
+  groupsOwned     groups[]          @relation("UserGroupsOwned")
+  channelsOwned   channels[]        @relation("UserChannelsOwned")
+  messages        messages[]
+  userPermissions userPermissions[]
+  userChats       userChats[]
+
+  // Index
+  @@index([email])
+}
+
+// CHATS table (ID with chat- prefix)
+model chats {
+  id        String   @id @default(dbgenerated("concat('chat-', gen_random_uuid())"))
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  messages       messages[]
+  userChats      userChats[]
+  UserPermission userPermissions[]
+}
+
+// GROUPS table (ID with group- prefix)
+model groups {
+  id         String   @id @default(dbgenerated("concat('group-', gen_random_uuid())"))
+  name       String
+  groupImage String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  ownerId    String
+
+  // Relationships
+  owner    users       @relation("UserGroupsOwned", fields: [ownerId], references: [id])
+  channels channels[]
+  UserChat userChats[]
+
+  @@index([ownerId])
+}
+
+// CHANNELS table (ID with channel- prefix)
+model channels {
+  id           String   @id @default(dbgenerated("concat('channel-', gen_random_uuid())"))
+  name         String
+  channelImage String?
+  ownerId      String
+  createdAt    DateTime @default(now())
+  isPublic     Boolean  @default(true)
+
+  // Relationships
+  owner    users       @relation("UserChannelsOwned", fields: [ownerId], references: [id])
+  Group    groups?     @relation(fields: [groupId], references: [id])
+  groupId  String?
+  UserChat userChats[]
+
+  @@index([ownerId])
+}
+
+// USERCHATS table
+model userChats {
+  userId   String
+  roomId   String // Chat, Group, or Channel ID
+  joinedAt DateTime @default(now())
+
+  // Relationships
+  user    users     @relation(fields: [userId], references: [id])
+  chat    chats?    @relation(fields: [roomId], references: [id], map: "UserChat_room_id_chat_fkey")
+  group   groups?   @relation(fields: [roomId], references: [id], map: "UserChat_room_id_group_fkey")
+  channel channels? @relation(fields: [roomId], references: [id], map: "UserChat_room_id_channel_fkey")
+
+  @@id([userId, roomId])
+}
+
+// MESSAGES table
+model messages {
+  id        String   @id @default(uuid())
+  date      DateTime @default(now())
+  content   String // Text, image, video, audio
+  userId    String
+  chatId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isEdited  Boolean  @default(false)
+
+  // Relationships
+  user        users         @relation(fields: [userId], references: [id])
+  chat        chats         @relation(fields: [chatId], references: [id])
+  attachments attachments[]
+
+  @@index([userId])
+  @@index([chatId])
+}
+
+// ATTACHMENT table
+model attachments {
+  id        String   @id @default(uuid())
+  messageId String
+  fileType  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+
+  // Relationships
+  message messages @relation(fields: [messageId], references: [id])
+
+  @@index([messageId])
+}
+
+// PERMISSION table
+model permissions {
+  id             String            @id @default(uuid())
+  action         String // e.g., remove_user, grant_admin_permission
+  userPermission userPermissions[]
+}
+
+// USERPERMISSION table
+model userPermissions {
+  user_id       String
+  chat_id       String
+  permission_id String
+  granted_at    DateTime @default(now())
+  granted_by    String
+
+  // Relationships
+  user       users       @relation(fields: [user_id], references: [id])
+  chat       chats       @relation(fields: [chat_id], references: [id])
+  permission permissions @relation(fields: [permission_id], references: [id])
+
+  @@id([user_id, chat_id, permission_id])
+}
