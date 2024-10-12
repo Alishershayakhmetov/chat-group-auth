@@ -17,17 +17,18 @@ datasource db {
 // USERS table
 model users {
   id             String    @id @default(uuid())
-  name           String
-  lastName       String
+  name           String?
+  lastName       String?
   email          String    @unique
-  password       String
+  password       String?
   profilePicture String? // Nullable
-  status         String // inline, offline
+  status         String? // inline, offline
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime? // Nullable for soft deletion
   lastActive     DateTime?
   isAdmin        Boolean   @default(false)
+  googleId       String?   @unique
 
   // Relationships
   groupsOwned     groups[]          @relation("UserGroupsOwned")
