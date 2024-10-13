@@ -1,19 +1,23 @@
+import 'dotenv/config';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { CustomRequest, User } from '../interfaces/interface.js';
 
-export const jwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers.authorization?.split(' ')[1];
+
+export const jwtMiddleware = (expressRequest: Request, res: Response, next: NextFunction) => {
+  const token = expressRequest.headers.authorization?.split(' ')[1];
   
   if (!token) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  jwt.verify(token, 'your_jwt_secret', (err, decoded) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err : any, decoded: any) => {
     if (err) {
-      return res.status(401).json({ message: 'Token is not valid' });
+      return res.status(401).json({ message: 'Token is not valid or expired' });
     }
-
-    req.user = decoded; // Attach user information to the request
+    
+    const req = expressRequest as CustomRequest;
+    req.user = decoded as User; // Attach user information to the request
     next();
   });
 };

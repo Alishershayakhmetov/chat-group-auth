@@ -44,4 +44,9 @@ authRouter.post('/verify-email', async (req: Request, res: Response) => {
   return authService.handleVerifyUserByCode(req, res);
 });
 
+// refresh token API
+authRouter.post('/refresh-token', (req: Request, res: Response) => {
+  return authService.getRefreshToken(req, res);
+})
+
 export default authRouter;

@@ -4,7 +4,7 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcryptjs';
 import { prismaService } from '../prismaClient.js';
-import { generateTokens } from "../utils/utils.js";
+import { generateAccessToken, generateRefreshToken } from '../utils/utils.js';
 
 // Local strategy
 passport.use(
@@ -32,7 +32,8 @@ passport.use(
         
 
         // Generate JWT tokens
-        const { accessToken, refreshToken } = generateTokens(user);
+        const accessToken = generateAccessToken(user.id);
+        const refreshToken = generateRefreshToken(user.id);
 
         // Return the user and token
         return done(null, { user, accessToken, refreshToken });
@@ -47,8 +48,8 @@ passport.use(
 passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID || '',
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        clientID: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         callbackURL: process.env.GOOGLE_CALLBACKURL,
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -82,8 +83,9 @@ passport.use(
             });
           }
   
-          // Generate a JWT token
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(user);
+          // Generate JWT tokens
+          const newAccessToken = generateAccessToken(user.id);
+          const newRefreshToken = generateRefreshToken(user.id);
   
           // Return the user and token
           return done(null, { user, newAccessToken, newRefreshToken, });

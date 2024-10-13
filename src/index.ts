@@ -4,9 +4,12 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import './config/passport.ts';
 import authRouter from './controllers/authController.js';
+import { jwtMiddleware } from './middlewares/authMiddleware.js';
+import { User } from './interfaces/interface.js';
 
 const app = express();
-const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT) : undefined;
+const port = process.env.APP_PORT!;
+
 
 const pool = new Pool({
   user: process.env.DB_USERNAME,
@@ -28,6 +31,12 @@ app.get('/test-db', async (req: Request, res: Response): Promise<void> => {
     console.error(err);
     res.status(500).send('Database error');
   }
+});
+
+
+app.get('/test-user-req', jwtMiddleware, (req: Request, res: Response) => {
+  const user = req.user as User;
+  res.send(`Welcome to your dashboard, user ID: ${user.id}`);
 });
 
 app.listen(port, () => {

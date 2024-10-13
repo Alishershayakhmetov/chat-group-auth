@@ -4,7 +4,7 @@ import { prismaService } from '../prismaClient.js';
 import {Request, Response} from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import redisClient from '../redisClient.js';
-import { generateVerificationCode, hashPassword } from '../utils/utils.js';
+import { generateAccessToken, generateRefreshToken, generateVerificationCode, hashPassword, verifyRefreshToken } from '../utils/utils.js';
 import { RegisterData, UserPayload } from '../interfaces/interface.js';
 import { emailClient } from '../emailClient.js';
 
@@ -55,12 +55,13 @@ class AuthService {
     }
 
     // Generate JWT
-    const userPayload: UserPayload = { id: user.id, email: user.email };
-    const token = jwt.sign(userPayload, process.env.JWT_SECRET!, { expiresIn: '15m' });
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
 
     return {
       user,
-      token,
+      accessToken,
+      refreshToken
     };
   }
 
@@ -146,6 +147,25 @@ class AuthService {
     }
     // Move the user to the actual database
     return this.createUserOnDB(tempUser, res);
+  }
+
+  async getRefreshToken(req: Request, res: Response) {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is required.' });
+    }
+  
+    const decodedToken = verifyRefreshToken(refreshToken);
+    
+    if (!decodedToken) {
+      return res.status(403).json({ message: 'Invalid or expired refresh token.' });
+    }
+    const userId = decodedToken.id;
+    const newAccessToken = generateAccessToken(userId);
+    const newRefreshToken = generateRefreshToken(userId);
+  
+    return res.json({ accessToken: newAccessToken, newRefreshToken });
   }
 }
 
