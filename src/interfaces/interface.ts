@@ -1,8 +1,14 @@
 import { Request } from "express";
 
+export interface TempRegisterData {
+    email: string;
+    password: string;
+    fullName?: string
+}
+
 export interface RegisterData {
     email: string;
-    hashedPassword: string;
+    password: string;
     name?: string;
     lastName?: string;
 }

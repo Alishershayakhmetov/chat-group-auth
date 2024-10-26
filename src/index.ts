@@ -6,11 +6,18 @@ import './config/passport.ts';
 import authRouter from './controllers/authController.js';
 import { jwtMiddleware } from './middlewares/authMiddleware.js';
 import { User } from './interfaces/interface.js';
+import cors from 'cors';
 
 const app = express();
 const port = process.env.APP_PORT!;
 
-
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Replace with your allowed origin
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+  })
+);
 const pool = new Pool({
   user: process.env.DB_USERNAME,
   host: process.env.DB_HOST,

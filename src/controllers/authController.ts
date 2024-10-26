@@ -35,7 +35,7 @@ authRouter.post('/register-temp', async (req: Request, res: Response) => {
 });
 
 // Verify email through URL
-authRouter.get('/verify-email/:code', async (req: Request, res: Response) => {
+authRouter.get('/verify-email', async (req: Request, res: Response) => {
   return authService.handleVerifyUserByURL(req, res);
 });
 

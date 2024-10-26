@@ -5,14 +5,14 @@ import {Request, Response} from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import redisClient from '../redisClient.js';
 import { generateAccessToken, generateRefreshToken, generateVerificationCode, hashPassword, verifyRefreshToken } from '../utils/utils.js';
-import { RegisterData, UserPayload } from '../interfaces/interface.js';
+import { RegisterData, TempRegisterData, UserPayload } from '../interfaces/interface.js';
 import { emailClient } from '../emailClient.js';
 
 
 class AuthService {
   // Function to register a new user
   async registerUser(data: RegisterData) {
-    const { email, hashedPassword, name, lastName } = data;
+    const { email, password, name, lastName } = data;
 
     // Check if user already exists
     const existingUser = await prismaService.getClient().users.findUnique({
@@ -26,7 +26,7 @@ class AuthService {
     const newUser = await prismaService.getClient().users.create({
       data: {
         email,
-        password: hashedPassword,
+        password: password,
         name,
         lastName,
       },
@@ -66,22 +66,24 @@ class AuthService {
   }
 
   async handleTempRegisterUser(req: Request, res: Response) {
-    const { email, hashedPassword: password, name, lastName } : RegisterData = req.body;
-    if (!email || !password || !name || !lastName) {
-      return res.status(400).json({ message: 'Email, password, name, and full name are required' });
+    const { email, password, fullName} : TempRegisterData = req.body;
+    if (!email || !password || !fullName) {
+      return res.status(400).json({ message: 'Email, password, and full name are required' });
     }
+    const [name, lastName] = fullName.split(" ");
 
     // Generate a unique verification code
+    // IMPORTANT: CHECK IF THERE IS A USER WITH EXACT ID 
     const uniqueIdentifier = uuidv4();
     const verificationCode = generateVerificationCode();
 
     // Store the temporary user in Redis with an expiration time of 5 minutes
-    const hashedPassword = hashPassword(password);
-    await redisClient.set(email, JSON.stringify({email, hashedPassword, name, lastName, verificationCode, uniqueIdentifier}), {'EX': 300});
-    await redisClient.set(uniqueIdentifier, JSON.stringify({email, hashedPassword, name, lastName, verificationCode, uniqueIdentifier}), {'EX': 300});
+    const hashedPassword = await hashPassword(password);
+    await redisClient.set(email, JSON.stringify({email, password: hashedPassword, name, lastName, verificationCode, uniqueIdentifier}), {'EX': 300});
+    await redisClient.set(uniqueIdentifier, JSON.stringify({email, password: hashedPassword, name, lastName, verificationCode, uniqueIdentifier}), {'EX': 300});
 
     // Create the verification URL
-    const verificationUrl = `${process.env.BASE_URL}/verify-email/${uniqueIdentifier}`;
+    const verificationUrl = `${process.env.BASE_URL}/verify/${uniqueIdentifier}`;
 
     // Send the verification code to the user's email
     try {
@@ -89,8 +91,8 @@ class AuthService {
         from: `"Your App" <${process.env.EMAIL_FROM}>`,
         to: email,
         subject: 'Email Verification',
-        text: `Please verify your email by clicking the following link: ${verificationUrl}`,
-        html: `<p>Please verify your email by clicking the following link: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
+        text: `Please verify your email by clicking the following link: ${verificationUrl}, or typing code on website. code: ${verificationCode}`,
+        html: `<p>Please verify your email by clicking the following link: <a href="${verificationUrl}">${verificationUrl}</a>, or typing code on website. code: ${verificationCode}</p>`,
       });
 
       res.status(200).json({ message: 'Verification email sent', verificationUrl });
@@ -103,9 +105,10 @@ class AuthService {
   async createUserOnDB(tempUser: RegisterData, res: Response) {
     // Move the user to the actual database
     try {
+      console.log(tempUser.password.length)
       const registeredUser = await this.registerUser({
         email: tempUser.email,
-        hashedPassword: tempUser.hashedPassword,
+        password: tempUser.password,
         name: tempUser.name,
         lastName: tempUser.lastName,
       });
@@ -118,7 +121,7 @@ class AuthService {
   }
 
   async handleVerifyUserByURL(req: Request, res: Response) {
-    const { code } = req.params;
+    const { code } = req.body;
 
     // Retrieve the temporary user from Redis
     const tempUserJson = await redisClient.get(code);
