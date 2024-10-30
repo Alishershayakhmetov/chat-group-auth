@@ -3,6 +3,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { users } from '@prisma/client';
 import crypto from "crypto";
 import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
 
 export const generateAccessToken = (userId: string) => {
     const accessToken = jwt.sign({ id: userId, token: "ACCESS" }, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '15m' }); // Access token expires in 15 minutes
@@ -10,7 +11,7 @@ export const generateAccessToken = (userId: string) => {
 }
 
 export const generateRefreshToken = (userId: string) => {
-    const refreshToken = jwt.sign({ id: userId, token: "REFRESH" }, process.env.REFRESH_TOKEN_SECRET!, { expiresIn: '15m' }); // refresh token expires in 7 days
+    const refreshToken = jwt.sign({ id: userId, token: "REFRESH" }, process.env.REFRESH_TOKEN_SECRET!, { expiresIn: '90d' }); // refresh token expires in 7 days
     return refreshToken;
 }
 

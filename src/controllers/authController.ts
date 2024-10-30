@@ -10,7 +10,9 @@ authRouter.post('/login', (req: Request, res: Response, next: NextFunction) => {
     if (err || !userWithToken) {
       return res.status(400).json({ message: info ? info.message : 'Login failed', user: userWithToken });
     }
-
+    
+    res.cookie("accessToken", userWithToken.accessToken, {httpOnly: true, maxAge: 1000 * 60 * 15})
+    res.cookie("refreshToken", userWithToken.refreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90})
     res.json({ user: userWithToken.user, accessToken: userWithToken.accessToken, refreshToken: userWithToken.refreshToken });
   })(req, res, next);
 });
@@ -24,8 +26,10 @@ authRouter.get('/auth/google/callback', (req: Request, res: Response, next: Next
       return res.redirect('/login?error=auth_failed');
     }
 
-    // Redirect with token as a query parameter for simplicity
-    res.redirect(`/dashboard?token=${userWithToken.token}`);
+    res.cookie("accessToken", userWithToken.newAccessToken, {httpOnly: true, maxAge: 1000 * 60 * 15})
+    res.cookie("refreshToken", userWithToken.newRefreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90})
+
+    res.redirect(`/dashboard`);
   })(req, res, next);
 });
 
@@ -43,10 +47,5 @@ authRouter.get('/verify-email', async (req: Request, res: Response) => {
 authRouter.post('/verify-email', async (req: Request, res: Response) => {
   return authService.handleVerifyUserByCode(req, res);
 });
-
-// refresh token API
-authRouter.post('/refresh-token', (req: Request, res: Response) => {
-  return authService.getRefreshToken(req, res);
-})
 
 export default authRouter;

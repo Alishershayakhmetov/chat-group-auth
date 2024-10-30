@@ -151,25 +151,6 @@ class AuthService {
     // Move the user to the actual database
     return this.createUserOnDB(tempUser, res);
   }
-
-  async getRefreshToken(req: Request, res: Response) {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).json({ message: 'Refresh token is required.' });
-    }
-  
-    const decodedToken = verifyRefreshToken(refreshToken);
-    
-    if (!decodedToken) {
-      return res.status(403).json({ message: 'Invalid or expired refresh token.' });
-    }
-    const userId = decodedToken.id;
-    const newAccessToken = generateAccessToken(userId);
-    const newRefreshToken = generateRefreshToken(userId);
-  
-    return res.json({ accessToken: newAccessToken, newRefreshToken });
-  }
 }
 
 export const authService = new AuthService();
