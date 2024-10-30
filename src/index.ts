@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
-import pkg from 'pg';
-const { Pool } = pkg;
-import './config/passport';
+import './config/passport.ts';
 import authRouter from './controllers/authController.js';
 import { jwtMiddleware } from './middlewares/authMiddleware.js';
 import { User } from './interfaces/interface.js';

@@ -29,7 +29,7 @@ authRouter.get('/auth/google/callback', (req: Request, res: Response, next: Next
     res.cookie("accessToken", userWithToken.newAccessToken, {httpOnly: true, maxAge: 1000 * 60 * 15})
     res.cookie("refreshToken", userWithToken.newRefreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90})
 
-    res.redirect(`/dashboard`);
+    res.redirect(`${process.env.BASE_WEBAPP_URL}`);
   })(req, res, next);
 });
 
