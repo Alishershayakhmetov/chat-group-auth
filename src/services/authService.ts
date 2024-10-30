@@ -73,7 +73,13 @@ class AuthService {
     const [name, lastName] = fullName.split(" ");
 
     // Generate a unique verification code
-    // IMPORTANT: CHECK IF THERE IS A USER WITH EXACT ID 
+    // IMPORTANT: CHECK IF THERE IS A USER AND WITH EXACT ID
+    const isUserExist = await prismaService.getClient().users.findUnique({
+      where: { email },
+    });
+    if (isUserExist) {
+      res.status(400).json({ message: 'User already exists' });
+    }
     const uniqueIdentifier = uuidv4();
     const verificationCode = generateVerificationCode();
 
@@ -105,7 +111,6 @@ class AuthService {
   async createUserOnDB(tempUser: RegisterData, res: Response) {
     // Move the user to the actual database
     try {
-      console.log(tempUser.password.length)
       const registeredUser = await this.registerUser({
         email: tempUser.email,
         password: tempUser.password,
