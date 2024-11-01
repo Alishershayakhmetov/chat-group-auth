@@ -16,26 +16,26 @@ datasource db {
 
 // USERS table
 model users {
-  id             String    @id @default(uuid())
-  name           String?
-  lastName       String?
-  email          String    @unique
-  password       String?
-  profilePicture String? // Nullable
-  status         String? // inline, offline
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime? // Nullable for soft deletion
-  lastActive     DateTime?
-  isAdmin        Boolean   @default(false)
-  googleId       String?   @unique
+  id           String    @id @default(uuid())
+  name         String?
+  lastName     String?   @map("last_name")
+  email        String    @unique
+  password     String?
+  profileImage String?   @map("profile_image")
+  status       String? // inline, offline
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+  lastActive   DateTime? @map("last_active")
+  isAdmin      Boolean   @default(false) @map("is_admin")
+  googleId     String?   @unique @map("google_id")
 
   // Relationships
   groupsOwned     groups[]          @relation("UserGroupsOwned")
   channelsOwned   channels[]        @relation("UserChannelsOwned")
   messages        messages[]
   userPermissions userPermissions[]
-  userChats       userChats[]
+  userChats       usersChats[]
 
   // Index
   @@index([email])
@@ -44,12 +44,12 @@ model users {
 // CHATS table (ID with chat- prefix)
 model chats {
   id        String   @id @default(dbgenerated("concat('chat-', gen_random_uuid())"))
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relationships
   messages       messages[]
-  userChats      userChats[]
+  userChats      usersChats[]
   UserPermission userPermissions[]
 }
 
@@ -57,15 +57,15 @@ model chats {
 model groups {
   id         String   @id @default(dbgenerated("concat('group-', gen_random_uuid())"))
   name       String
-  groupImage String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  ownerId    String
+  groupImage String?  @map("group_image")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  ownerId    String   @map("owner_id")
 
   // Relationships
-  owner    users       @relation("UserGroupsOwned", fields: [ownerId], references: [id])
+  owner    users        @relation("UserGroupsOwned", fields: [ownerId], references: [id])
   channels channels[]
-  UserChat userChats[]
+  UserChat usersChats[]
 
   @@index([ownerId])
 }
@@ -74,25 +74,26 @@ model groups {
 model channels {
   id           String   @id @default(dbgenerated("concat('channel-', gen_random_uuid())"))
   name         String
-  channelImage String?
-  ownerId      String
-  createdAt    DateTime @default(now())
-  isPublic     Boolean  @default(true)
+  channelImage String?  @map("channel_image")
+  ownerId      String   @map("owner_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  isPublic     Boolean  @default(true) @map("is_public")
 
   // Relationships
-  owner    users       @relation("UserChannelsOwned", fields: [ownerId], references: [id])
-  Group    groups?     @relation(fields: [groupId], references: [id])
+  owner    users        @relation("UserChannelsOwned", fields: [ownerId], references: [id])
+  Group    groups?      @relation(fields: [groupId], references: [id])
   groupId  String?
-  UserChat userChats[]
+  UserChat usersChats[]
 
   @@index([ownerId])
 }
 
 // USERCHATS table
-model userChats {
-  userId   String
-  roomId   String // Chat, Group, or Channel ID
-  joinedAt DateTime @default(now())
+model usersChats {
+  userId    String   @map("user_id")
+  roomId    String   @map("room_id") // Chat, Group, or Channel ID
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relationships
   user    users     @relation(fields: [userId], references: [id])
@@ -101,6 +102,7 @@ model userChats {
   channel channels? @relation(fields: [roomId], references: [id], map: "UserChat_room_id_channel_fkey")
 
   @@id([userId, roomId])
+  @@map("users_chats")
 }
 
 // MESSAGES table
@@ -108,28 +110,28 @@ model messages {
   id        String   @id @default(uuid())
   date      DateTime @default(now())
   content   String // Text, image, video, audio
-  userId    String
-  chatId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isEdited  Boolean  @default(false)
+  userId    String   @map("user_id")
+  roomId    String   @map("room_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  isEdited  Boolean  @default(false) @map("is_edited")
 
   // Relationships
   user        users         @relation(fields: [userId], references: [id])
-  chat        chats         @relation(fields: [chatId], references: [id])
+  chat        chats         @relation(fields: [roomId], references: [id])
   attachments attachments[]
 
   @@index([userId])
-  @@index([chatId])
+  @@index([roomId])
 }
 
 // ATTACHMENT table
 model attachments {
   id        String   @id @default(uuid())
-  messageId String
-  fileType  String
-  fileUrl   String
-  createdAt DateTime @default(now())
+  messageId String   @map("message_id")
+  fileType  String   @map("file_type")
+  fileUrl   String   @map("file_url")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relationships
   message messages @relation(fields: [messageId], references: [id])
@@ -146,16 +148,17 @@ model permissions {
 
 // USERPERMISSION table
 model userPermissions {
-  user_id       String
-  chat_id       String
-  permission_id String
-  granted_at    DateTime @default(now())
-  granted_by    String
+  userId       String   @map("user_id")
+  roomId       String   @map("room_id")
+  permissionId String   @map("permission_id")
+  grantedIt    DateTime @default(now()) @map("granted_at")
+  grantedBy    String   @map("granted_by")
 
   // Relationships
-  user       users       @relation(fields: [user_id], references: [id])
-  chat       chats       @relation(fields: [chat_id], references: [id])
-  permission permissions @relation(fields: [permission_id], references: [id])
+  user       users       @relation(fields: [userId], references: [id])
+  chat       chats       @relation(fields: [roomId], references: [id])
+  permission permissions @relation(fields: [permissionId], references: [id])
 
-  @@id([user_id, chat_id, permission_id])
+  @@id([userId, roomId, permissionId])
+  @@map("user_permissions")
 }

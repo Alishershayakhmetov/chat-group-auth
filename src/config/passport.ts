@@ -3,7 +3,7 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcryptjs';
-import { prismaService } from '../prismaClient.js';
+import { prisma } from '../prismaClient.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/utils.js';
 
 // Local strategy
@@ -11,7 +11,6 @@ passport.use(
   new LocalStrategy(
     { usernameField: 'email' },
     async (email, password, done) => {
-      const prisma = prismaService.getClient();
       try {
         // Find the user by email
         const user = await prisma.users.findUnique({
@@ -53,7 +52,6 @@ passport.use(
         callbackURL: process.env.GOOGLE_CALLBACKURL,
       },
       async (accessToken, refreshToken, profile, done) => {
-        const prisma = prismaService.getClient();
         try {
           const email = profile.emails?.[0].value;
           if (!email) {
@@ -72,7 +70,7 @@ passport.use(
                 email,
                 name: profile.name?.givenName,
                 lastName: profile.name?.familyName,
-                profilePicture: profile.photos?.[0]?.value,
+                profileImage: profile.photos?.[0]?.value,
                 googleId: profile.id, // Save Google ID for future reference
               },
             });

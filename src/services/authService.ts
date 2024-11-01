@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import jwt from 'jsonwebtoken';
-import { prismaService } from '../prismaClient.js';
+import { prisma } from '../prismaClient.js';
 import {Request, Response} from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import redisClient from '../redisClient.js';
@@ -15,7 +15,7 @@ class AuthService {
     const { email, password, name, lastName } = data;
 
     // Check if user already exists
-    const existingUser = await prismaService.getClient().users.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { email },
     });
     if (existingUser) {
@@ -23,7 +23,7 @@ class AuthService {
     }
 
     // Create the new user
-    const newUser = await prismaService.getClient().users.create({
+    const newUser = await prisma.users.create({
       data: {
         email,
         password: password,
@@ -40,12 +40,12 @@ class AuthService {
   // Function to handle Google authentication response
   async handleGoogleAuth(userProfile: any) {
     // Find or create the user
-    let user = await prismaService.getClient().users.findUnique({
+    let user = await prisma.users.findUnique({
       where: { email: userProfile.email },
     });
 
     if (!user) {
-      user = await prismaService.getClient().users.create({
+      user = await prisma.users.create({
         data: {
           email: userProfile.email,
           name: userProfile.firstName,
@@ -74,7 +74,7 @@ class AuthService {
 
     // Generate a unique verification code
     // IMPORTANT: CHECK IF THERE IS A USER AND WITH EXACT ID
-    const isUserExist = await prismaService.getClient().users.findUnique({
+    const isUserExist = await prisma.users.findUnique({
       where: { email },
     });
     if (isUserExist) {
