@@ -7,7 +7,23 @@ import redisClient from '../redisClient.js';
 import { generateAccessToken, generateRefreshToken, generateVerificationCode, hashPassword, verifyRefreshToken } from '../utils/utils.js';
 import { RegisterData, TempRegisterData, UserPayload } from '../interfaces/interface.js';
 import { emailClient } from '../emailClient.js';
+import { Kafka } from "kafkajs";
 
+const kafka = new Kafka({
+  clientId: "producer-service",
+  brokers: ['localhost:9092']
+});
+
+const producer = kafka.producer();
+
+const sendMessage = async (message: any) => {
+  await producer.connect();
+  await producer.send({
+    topic: 'my_first_topic',
+    messages: [{ value: JSON.stringify(message) }],
+  });
+  await producer.disconnect();
+};
 
 class AuthService {
   // Function to register a new user
@@ -93,6 +109,7 @@ class AuthService {
 
     // Send the verification code to the user's email
     try {
+      /*
       await emailClient.sendMail({
         from: `"Your App" <${process.env.EMAIL_FROM}>`,
         to: email,
@@ -100,6 +117,8 @@ class AuthService {
         text: `Please verify your email by clicking the following link: ${verificationUrl}, or typing code on website. code: ${verificationCode}`,
         html: `<p>Please verify your email by clicking the following link: <a href="${verificationUrl}">${verificationUrl}</a>, or typing code on website. code: ${verificationCode}</p>`,
       });
+      */
+      sendMessage({ email: email, text: `Please verify your email by clicking the following link: ${verificationUrl}, or typing code on website. code: ${verificationCode}`, HTMLText: `<p>Please verify your email by clicking the following link: <a href="${verificationUrl}">${verificationUrl}</a>, or typing code on website. code: ${verificationCode}</p>`});
 
       res.status(200).json({ message: 'Verification email sent', verificationUrl });
     } catch (error) {
