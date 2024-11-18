@@ -1,13 +1,12 @@
 import 'dotenv/config';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../prismaClient.js';
 import {Request, Response} from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import redisClient from '../redisClient.js';
 import { generateAccessToken, generateRefreshToken, generateVerificationCode, hashPassword, verifyRefreshToken } from '../utils/utils.js';
 import { RegisterData, TempRegisterData, UserPayload } from '../interfaces/interface.js';
-import { emailClient } from '../emailClient.js';
 import { Kafka } from "kafkajs";
+import { prisma } from '../prismaClient.js';
 
 const kafka = new Kafka({
   clientId: "producer-service",

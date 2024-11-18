@@ -1,7 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import passport from 'passport';
 import { authService } from '../services/authService.js';
-
+import { CustomRequest } from '../interfaces/interface.js';
+import { prisma } from '../prismaClient.js';
 const authRouter = Router();
 
 // Local login
@@ -47,5 +48,32 @@ authRouter.get('/verify-email', async (req: Request, res: Response) => {
 authRouter.post('/verify-email', async (req: Request, res: Response) => {
   return authService.handleVerifyUserByCode(req, res);
 });
+
+authRouter.get('/auth/isAuth', async (req: Request, res: Response) => {
+  const userId = (req as CustomRequest).user.id;
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id:userId }
+    })
+    if(!user) {
+      res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).end();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+  }
+)
+
+authRouter.get("/isPrismaWorking", async (req: Request, res: Response) => {
+  try {
+    const result = await prisma.users.findMany();
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+})
 
 export default authRouter;

@@ -6,7 +6,6 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 
 export const jwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const { accessToken, refreshToken } = req.cookies;
-
   const handleDecodedUser = (decoded: any) => {
     (req as CustomRequest).user = decoded as User;
     next();

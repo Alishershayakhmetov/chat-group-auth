@@ -1,9 +1,7 @@
 import 'dotenv/config';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { users } from '@prisma/client';
 import crypto from "crypto";
 import bcrypt from 'bcryptjs';
-import { Request, Response } from 'express';
 
 export const generateAccessToken = (userId: string) => {
     const accessToken = jwt.sign({ id: userId, token: "ACCESS" }, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '15m' }); // Access token expires in 15 minutes

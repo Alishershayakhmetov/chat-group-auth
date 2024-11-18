@@ -3,9 +3,8 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../prismaClient.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/utils.js';
-
+import { prisma } from '../prismaClient.js';
 // Local strategy
 passport.use(
   new LocalStrategy(
