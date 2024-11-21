@@ -1,28 +1,11 @@
 import 'dotenv/config';
-import jwt from 'jsonwebtoken';
 import {Request, Response} from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import redisClient from '../redisClient.js';
 import { generateAccessToken, generateRefreshToken, generateVerificationCode, hashPassword, verifyRefreshToken } from '../utils/utils.js';
 import { RegisterData, TempRegisterData, UserPayload } from '../interfaces/interface.js';
-import { Kafka } from "kafkajs";
 import { prisma } from '../prismaClient.js';
-
-const kafka = new Kafka({
-  clientId: "producer-service",
-  brokers: ['localhost:9092']
-});
-
-const producer = kafka.producer();
-
-const sendMessage = async (message: any) => {
-  await producer.connect();
-  await producer.send({
-    topic: 'my_first_topic',
-    messages: [{ value: JSON.stringify(message) }],
-  });
-  await producer.disconnect();
-};
+import { emailClient } from '../emailClient.js';
 
 class AuthService {
   // Function to register a new user
@@ -104,20 +87,17 @@ class AuthService {
     await redisClient.set(uniqueIdentifier, JSON.stringify({email, password: hashedPassword, name, lastName, verificationCode, uniqueIdentifier}), {'EX': 300});
 
     // Create the verification URL
-    const verificationUrl = `${process.env.BASE_URL}/verify/${uniqueIdentifier}`;
+    const verificationUrl = `${process.env.BASE_URL}/api/verify-email/${uniqueIdentifier}`;
 
     // Send the verification code to the user's email
     try {
-      /*
-      await emailClient.sendMail({
+      emailClient.sendMail({
         from: `"Your App" <${process.env.EMAIL_FROM}>`,
         to: email,
         subject: 'Email Verification',
         text: `Please verify your email by clicking the following link: ${verificationUrl}, or typing code on website. code: ${verificationCode}`,
         html: `<p>Please verify your email by clicking the following link: <a href="${verificationUrl}">${verificationUrl}</a>, or typing code on website. code: ${verificationCode}</p>`,
       });
-      */
-      sendMessage({ email: email, text: `Please verify your email by clicking the following link: ${verificationUrl}, or typing code on website. code: ${verificationCode}`, HTMLText: `<p>Please verify your email by clicking the following link: <a href="${verificationUrl}">${verificationUrl}</a>, or typing code on website. code: ${verificationCode}</p>`});
 
       res.status(200).json({ message: 'Verification email sent', verificationUrl });
     } catch (error) {
@@ -144,18 +124,20 @@ class AuthService {
   }
 
   async handleVerifyUserByURL(req: Request, res: Response) {
-    const { code } = req.body;
+    const url = req.params.URL; 
 
     // Retrieve the temporary user from Redis
-    const tempUserJson = await redisClient.get(code);
+    const tempUserJson = await redisClient.get(url);
     if (!tempUserJson) {
-      return res.status(400).json({ message: 'Invalid or expired verification code' });
+      return res.status(400).json({ message: 'Invalid or expired verification URL' });
     }
   
     const tempUser = JSON.parse(tempUserJson);
 
     // Move the user to the actual database
-    return this.createUserOnDB(tempUser, res);
+    const result = await this.registerUser(tempUser);
+    console.log(result);
+    return res.redirect(`${process.env.WEBAPP_URL!}/sign-in`);
   }
 
   async handleVerifyUserByCode(req: Request, res: Response) {

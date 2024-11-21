@@ -3,6 +3,7 @@ import passport from 'passport';
 import { authService } from '../services/authService.js';
 import { CustomRequest } from '../interfaces/interface.js';
 import { prisma } from '../prismaClient.js';
+const authRouterProtected = Router();
 const authRouter = Router();
 
 // Local login
@@ -30,7 +31,7 @@ authRouter.get('/auth/google/callback', (req: Request, res: Response, next: Next
     res.cookie("accessToken", userWithToken.newAccessToken, {httpOnly: true, maxAge: 1000 * 60 * 15})
     res.cookie("refreshToken", userWithToken.newRefreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90})
 
-    res.redirect(`${process.env.BASE_WEBAPP_URL}`);
+    res.redirect(`${process.env.WEBAPP_URL}`);
   })(req, res, next);
 });
 
@@ -40,7 +41,7 @@ authRouter.post('/register-temp', async (req: Request, res: Response) => {
 });
 
 // Verify email through URL
-authRouter.get('/verify-email', async (req: Request, res: Response) => {
+authRouter.get('/verify-email/:URL', async (req: Request, res: Response) => {
   return authService.handleVerifyUserByURL(req, res);
 });
 
@@ -49,7 +50,7 @@ authRouter.post('/verify-email', async (req: Request, res: Response) => {
   return authService.handleVerifyUserByCode(req, res);
 });
 
-authRouter.get('/auth/isAuth', async (req: Request, res: Response) => {
+authRouterProtected.get('/auth/isAuth', async (req: Request, res: Response) => {
   const userId = (req as CustomRequest).user.id;
   try {
     const user = await prisma.users.findUnique({
@@ -66,7 +67,7 @@ authRouter.get('/auth/isAuth', async (req: Request, res: Response) => {
   }
 )
 
-authRouter.get("/isPrismaWorking", async (req: Request, res: Response) => {
+authRouterProtected.get("/isPrismaWorking", async (req: Request, res: Response) => {
   try {
     const result = await prisma.users.findMany();
     res.json(result);
@@ -76,4 +77,4 @@ authRouter.get("/isPrismaWorking", async (req: Request, res: Response) => {
   }
 })
 
-export default authRouter;
+export {authRouter, authRouterProtected};

@@ -69,7 +69,7 @@ passport.use(
                 email,
                 name: profile.name?.givenName,
                 lastName: profile.name?.familyName,
-                profileImage: profile.photos?.[0]?.value,
+                imgURL: profile.photos?.[0]?.value,
                 googleId: profile.id, // Save Google ID for future reference
               },
             });

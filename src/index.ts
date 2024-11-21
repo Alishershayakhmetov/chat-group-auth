@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import './config/passport.ts';
-import authRouter from './controllers/authController.js';
+import {authRouter, authRouterProtected} from './controllers/authController.js';
 import { jwtMiddleware } from './middlewares/authMiddleware.js';
 import { User } from './interfaces/interface.js';
 import cors from 'cors';
@@ -21,7 +21,8 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser())
-app.use('/api', jwtMiddleware, authRouter);
+app.use('/api/protected', jwtMiddleware, authRouterProtected);
+app.use("/api", authRouter);
 
 app.get('/dashboard', jwtMiddleware, (req: Request, res: Response) => {
   const user = req.user as User;
