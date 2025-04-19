@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
-import './config/passport.ts';
+import './config/passport.js';
 import {authRouter, authRouterProtected} from './controllers/authController.js';
 import { jwtMiddleware } from './middlewares/authMiddleware.js';
 import { User } from './interfaces/interface.js';
@@ -32,4 +32,3 @@ app.get('/dashboard', jwtMiddleware, (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
-
