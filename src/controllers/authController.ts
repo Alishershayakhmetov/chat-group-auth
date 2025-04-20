@@ -3,6 +3,7 @@ import passport from 'passport';
 import { authService } from '../services/authService.js';
 import { CustomRequest } from '../interfaces/interface.js';
 import { prisma } from '../prismaClient.js';
+import config from '../config/index.js';
 const authRouterProtected = Router();
 const authRouter = Router();
 
@@ -13,8 +14,8 @@ authRouter.post('/login', (req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({ message: info ? info.message : 'Login failed', user: userWithToken });
     }
     
-    res.cookie("accessToken", userWithToken.accessToken, {httpOnly: true, maxAge: 1000 * 60 * 15})
-    res.cookie("refreshToken", userWithToken.refreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90})
+    res.cookie("accessToken", userWithToken.accessToken, {httpOnly: true, maxAge: 1000 * 60 * 15, domain: config.COOKIE_DOMAIN})
+    res.cookie("refreshToken", userWithToken.refreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90, domain: config.COOKIE_DOMAIN})
     res.json({ user: userWithToken.user, accessToken: userWithToken.accessToken, refreshToken: userWithToken.refreshToken });
   })(req, res, next);
 });
@@ -25,13 +26,13 @@ authRouter.get('/auth/google', passport.authenticate('google', { scope: ['profil
 authRouter.get('/auth/google/callback', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('google', { session: false }, (err: Error | null, userWithToken: any) => {
     if (err || !userWithToken) {
-      return res.redirect('/login?error=auth_failed');
+      return res.redirect(`${config.WEBAPP_URL}/sign-up`)
     }
 
-    res.cookie("accessToken", userWithToken.newAccessToken, {httpOnly: true, maxAge: 1000 * 60 * 15})
-    res.cookie("refreshToken", userWithToken.newRefreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90})
+    res.cookie("accessToken", userWithToken.newAccessToken, {httpOnly: true, maxAge: 1000 * 60 * 15, domain: config.COOKIE_DOMAIN})
+    res.cookie("refreshToken", userWithToken.newRefreshToken, {httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 90, domain: config.COOKIE_DOMAIN})
 
-    res.redirect(`${process.env.WEBAPP_URL}`);
+    res.redirect(`${config.WEBAPP_URL}`);
   })(req, res, next);
 });
 

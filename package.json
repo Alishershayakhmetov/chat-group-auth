@@ -4,10 +4,11 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "dev:node": "node --loader ts-node/esm src/index.ts",
-    "dev": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon --loader ts-node/esm",
-    "start:nodemon": "node dist/index.js",
-    "build": "tsc"
+    "dev:node": "shx cp .env.development .env && node --loader ts-node/esm src/index.ts",
+    "dev": "shx cp .env.development .env && cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 nodemon --loader ts-node/esm",
+    "start:nodemon": "shx cp .env.production .env && node dist/index.js",
+    "build": "tsc",
+    "buildWithPackagesAndClient": "pnpm install && shx cp .env.production .env && pnpm prisma generate && pnpm build"
   },
   "keywords": [],
   "author": "",
@@ -49,6 +50,7 @@
     "@types/uuid": "^10.0.0",
     "cross-env": "^7.0.3",
     "nodemon": "^3.1.7",
+    "shx": "^0.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },

@@ -6,13 +6,14 @@ import { jwtMiddleware } from './middlewares/authMiddleware.js';
 import { User } from './interfaces/interface.js';
 import cors from 'cors';
 import cookieParser from "cookie-parser";
+import config from "./config/index.js";
 
 const app = express();
-const port = process.env.APP_PORT!;
+const port = config.APP_PORT;
 
 app.use(
   cors({
-    origin: process.env.WEBAPP_URL!,
+    origin: config.WEBAPP_URL,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
     credentials: true

@@ -2,14 +2,15 @@ import 'dotenv/config';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import crypto from "crypto";
 import bcrypt from 'bcryptjs';
+import config from '../config/index.js';
 
 export const generateAccessToken = (userId: string) => {
-    const accessToken = jwt.sign({ id: userId, token: "ACCESS" }, process.env.ACCESS_TOKEN_SECRET!, { expiresIn: '15m' }); // Access token expires in 15 minutes
+    const accessToken = jwt.sign({ id: userId, token: "ACCESS" }, config.ACCESS_TOKEN_SECRET!, { expiresIn: '15m' }); // Access token expires in 15 minutes
     return accessToken;
 }
 
 export const generateRefreshToken = (userId: string) => {
-    const refreshToken = jwt.sign({ id: userId, token: "REFRESH" }, process.env.REFRESH_TOKEN_SECRET!, { expiresIn: '90d' }); // refresh token expires in 7 days
+    const refreshToken = jwt.sign({ id: userId, token: "REFRESH" }, config.REFRESH_TOKEN_SECRET!, { expiresIn: '90d' }); // refresh token expires in 7 days
     return refreshToken;
 }
 
@@ -21,7 +22,7 @@ export const generateVerificationCode = () => {
 
 export const verifyRefreshToken = (token: string): JwtPayload | null => {
     try {
-      return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!) as JwtPayload;
+      return jwt.verify(token, config.REFRESH_TOKEN_SECRET!) as JwtPayload;
     } catch (error) {
       return null;
     }

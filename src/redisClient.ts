@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { createClient } from 'redis';
+import config from './config/index.js';
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL,
+  url: config.REDIS_URL,
 });
 
 // Error handling

@@ -5,6 +5,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcryptjs';
 import { generateAccessToken, generateRefreshToken } from '../utils/utils.js';
 import { prisma } from '../prismaClient.js';
+import config from './index.js';
 // Local strategy
 passport.use(
   new LocalStrategy(
@@ -46,9 +47,9 @@ passport.use(
 passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: process.env.GOOGLE_CALLBACKURL,
+        clientID: config.GOOGLE_CLIENT_ID!,
+        clientSecret: config.GOOGLE_CLIENT_SECRET!,
+        callbackURL: config.GOOGLE_CALLBACKURL,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {

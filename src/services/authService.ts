@@ -6,6 +6,7 @@ import { generateAccessToken, generateRefreshToken, generateVerificationCode, ha
 import { RegisterData, TempRegisterData, UserPayload } from '../interfaces/interface.js';
 import { prisma } from '../prismaClient.js';
 import { emailClient } from '../emailClient.js';
+import config from '../config/index.js';
 
 class AuthService {
   // Function to register a new user
@@ -87,7 +88,7 @@ class AuthService {
     await redisClient.set(uniqueIdentifier, JSON.stringify({email, password: hashedPassword, name, lastName, verificationCode, uniqueIdentifier}), {'EX': 300});
 
     // Create the verification URL
-    const verificationUrl = `${process.env.BASE_URL}/api/verify-email/${uniqueIdentifier}`;
+    const verificationUrl = `${config.BASE_URL}/api/verify-email/${uniqueIdentifier}`;
 
     // Send the verification code to the user's email
     try {
@@ -137,7 +138,7 @@ class AuthService {
     // Move the user to the actual database
     const result = await this.registerUser(tempUser);
     console.log(result);
-    return res.redirect(`${process.env.WEBAPP_URL!}/sign-in`);
+    return res.redirect(`${config.WEBAPP_URL!}/sign-in`);
   }
 
   async handleVerifyUserByCode(req: Request, res: Response) {

@@ -1,13 +1,13 @@
-import 'dotenv/config';
 import nodemailer from 'nodemailer';
+import config from './config/index.js';
 
 // Nodemailer configuration for sending emails
 export const emailClient = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT),
+    host: config.EMAIL_HOST,
+    port: Number(config.EMAIL_PORT),
     secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: config.EMAIL_USER,
+      pass: config.EMAIL_PASS,
     },
 });
