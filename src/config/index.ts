@@ -6,7 +6,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export default {
-  APP_PORT: process.env.APP_PORT,
 	WEBAPP_URL: process.env.WEBAPP_URL,
 	BASE_URL: process.env.BASE_URL,
 	EMAIL_HOST: process.env.EMAIL_HOST,

@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 import config from "./config/index.js";
 
 const app = express();
-const port = config.APP_PORT;
+const port = process.env.PORT || 3000;
 
 app.use(
   cors({
