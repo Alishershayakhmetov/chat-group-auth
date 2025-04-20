@@ -25,10 +25,7 @@ app.use(cookieParser())
 app.use('/api/protected', jwtMiddleware, authRouterProtected);
 app.use("/api", authRouter);
 
-app.get('/dashboard', jwtMiddleware, (req: Request, res: Response) => {
-  const user = req.user as User;
-  res.send(`Welcome to your dashboard, user ID: ${user.id}`);
-});
+app.get('/health', (req, res) => res.status(200).send('OK'));
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
